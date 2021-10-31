@@ -13,26 +13,42 @@ const SkinRandomizerName = "SkinRandomizer"
 // 3 - дефолтный (удалить)
 // Текст в кавычках - выбор вручную (из папки) например "cursor.png"
 var config = {
-	cursor: 0,
-	hitcircle: 2,
-	hitcircleoverlay: 0,
-	approachcircle: 1,
+	cursor: 1,
+	cursormiddle: 1,
 	cursortrail: 1,
-	follows: 1,
+	cursorripple: 1,
+	cursorsmoke: 1,
+	hitcircle: 1,
+	hitcircleoverlay: 1,
+	approachcircle: 1,
 	hit0:1,
 	hit100: 1,
 	hit50: 1,
 	hit300: 1,
 	reversearrow: 1,
 	sliderb: 1,
-	sliderfollowcircle: 0,
+	sliderfollowcircle: 1,
 	sliderscorepoint: 1,
 	sliderstartcircle: 2,
-	sliderstartcircleoverlay: 0,
+	sliderstartcircleoverlay: 1,
 	sliderendcircle: 2,
 	sliderendcircleoverlay: 2,
-	spinner: 1,
-	font: 1,
+	spinnerapproachcircle: 1,
+	spinnerbottom: 1,
+	spinnercircle: 1,
+	spinnerclear: 1,
+	spinnerglow: 1,
+	spinnermiddle: 1,
+	spinnermiddle2: 1,
+	spinnerrpm: 1,
+	spinnerspin: 1,
+	spinnertop: 1,
+
+	followpoint: 1,
+	folowpointsStartFrame: 1,
+	folowpointsLength: 5,
+	//spinner background spinner metre
+	//font: 1,
 }
 
 /////////////////////////////////////////////
@@ -40,7 +56,7 @@ var config = {
 var log = console.log.bind(console)
 var fs = require('fs').promises
 var path = require('path')
-//var jimp = require('jimp')
+var jimp = require('jimp')
 
 function Rand(max){
 	return Math.floor(Math.random() * max)
@@ -50,13 +66,7 @@ async function getRandomFile(relativepath){
 	var dir = await fs.readdir(relativepath)
 	var randfileint=Rand(dir.length)
 	statfile = await fs.lstat( relativepath+"\\"+dir[randfileint] )
-	if(!statfile.isDirectory()){
-		return dir[randfileint]
-	}else{
-		return ""
-	}
-
-	
+	return dir[randfileint]
 }
 
 async function DeleteElement(element){
@@ -73,16 +83,30 @@ async function DeleteElement(element){
 	await fs.unlink(skinFolder + "\\" + SkinRandomizerName + "\\" + element + ".png")
 }
 
+async function CopyElement(configVar, elementFrom,elementTo){
+	if (configVar != 0 && configVar != 3){
+		try {
+			await fs.access(skinFolder + "\\" + SkinRandomizerName + "\\" + elementFrom+".png", fs.F_OK)
+			await fs.copyFile(skinFolder + "\\" + SkinRandomizerName + "\\" + elementFrom+".png", skinFolder + "\\" + SkinRandomizerName + "\\" + elementTo+".png" )
+		} catch (e){
+			//do nothing
+		}
+	}
+}
+
 async function RandElement(config_var,element_filename,element_folder){
 	var filename = ""
 	switch (config_var){
 		case 0:
 			break
 		case 1:
-			while (filename === ""){
-				filename = await getRandomFile("skins" + "\\" + element_folder)
+			filename = await getRandomFile("skins" + "\\" + element_folder)
+			var statfile = await fs.lstat( "skins" + "\\" + element_folder + "\\" + filename )
+			if(statfile.isDirectory()){
+				await CopyFolder( "skins" + "\\" + element_folder + "\\" + filename, element_filename)
+			} else {
+				filename = "skins" + "\\" + element_folder + "\\" + filename
 			}
-			filename = "skins" + "\\" + element_folder + "\\" + filename
 			break
 		case 2:
 			filename = "skins" + "\\" + "empty.png"
@@ -96,9 +120,34 @@ async function RandElement(config_var,element_filename,element_folder){
 			break
 	}
 	if (config_var != 0 && config_var != 3){
-		fs.copyFile(filename, skinFolder + "\\" + SkinRandomizerName + "\\" + element_filename + path.extname(filename))
+		if (  (config_var == 1 && !statfile.isDirectory()) || config_var != 1  ){
+			await fs.copyFile(filename, skinFolder + "\\" + SkinRandomizerName + "\\" + element_filename + path.extname(filename))
+		}
 	}
 
+}
+
+async function CopyFolder(elements_folder, element_filename){
+	switch (element_filename){
+		case "spinner-baсkground":
+		case "spinner-metre":
+			try {
+				await fs.access(elements_folder + "\\spinner-baсkground.png", fs.F_OK)
+				await fs.copyFile(elements_folder + "\\spinner-baсkground.png", skinFolder + "\\" + SkinRandomizerName + "\\spinner-baсkground.png")
+			} catch (e){
+				await fs.copyFile("skins" + "\\" + "empty.png", skinFolder + "\\" + SkinRandomizerName + "\\spinner-baсkground.png")
+			}
+			try {
+				await fs.access(elements_folder + "\\spinner-metre.png", fs.F_OK)
+				await fs.copyFile(elements_folder + "\\spinner-metre.png", skinFolder + "\\" + SkinRandomizerName + "\\spinner-metre.png")
+			} catch (e){
+				await fs.copyFile("skins" + "\\" + "empty.png", skinFolder + "\\" + SkinRandomizerName + "\\spinner-metre.png")
+			}
+			break
+		default:
+			log("another "+element_filename+" "+elements_folder)
+			break
+	}
 }
 
 async function getAllFolowPoints(){
@@ -123,6 +172,38 @@ async function getAllFolowPoints(){
 	}
 }
 
+async function renameFolders(path){
+	var skinslist = await fs.readdir("skins\\"+path)
+	var int=1
+	for (var skinfolder of skinslist){
+		statfile = await fs.lstat( "skins\\"+path+"\\"+skinfolder )
+		if(statfile.isDirectory()){
+			await fs.rename("skins\\spinner-baсk-and-metre\\"+skinfolder,"skins\\spinner-baсk-and-metre\\"+int)
+			int++
+		}
+	}
+}
+
+async function removeEmptyFolders(){
+	var skinslist = await fs.readdir("skins\\"+'spinner-baсk-and-metre')
+	for (var skinfolder of skinslist){
+		statfile = await fs.lstat( "skins\\"+'spinner-baсk-and-metre'+"\\"+skinfolder )
+		if(statfile.isDirectory()){
+			var skinFolderCheck = await fs.readdir("skins\\"+'spinner-baсk-and-metre'+"\\"+skinfolder)
+			var found = 0
+			for (var skinfile of skinFolderCheck){
+				if (skinfile === "spinner-background.png" || skinfile === "spinner-metre.png"){
+					found = 1
+				}
+			}
+			if (found == 0){
+				await fs.rmdir("skins\\"+'spinner-baсk-and-metre'+"\\"+skinfolder, { recursive: true, force: true })
+				log ('delete '+"skins\\"+'spinner-baсk-and-metre'+"\\"+skinfolder)
+			}
+		}
+	}
+}
+
 function RandColor(){
 	return Rand(255)+","+Rand(255)+","+Rand(255)
 }
@@ -140,23 +221,70 @@ async function MakeSkinIni(){
 	await fs.appendFile(skinini, 'SliderBallFrames: 1'+'\n')
 	await fs.appendFile(skinini, 'AllowSliderBallTint: 1'+'\n')
 	await fs.appendFile(skinini, 'SliderBallFlip: 1'+'\n')
-	await fs.appendFile(skinini, '[Colours]'+'\n')
-	await fs.appendFile(skinini, 'Combo1: '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'Combo2: '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'Combo3: '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'Combo4: '+RandColor()+'\n')
+	await fs.appendFile(skinini, '\n[Colours]\n')
+	var rand_colors_num = 1+Rand(7)
+	log("Colors "+rand_colors_num)
+	for(var rand_color_i = 1; rand_color_i <= rand_colors_num; rand_color_i++){
+		await fs.appendFile(skinini, 'Combo'+rand_color_i+': '+RandColor()+'\n')
+	}
 	await fs.appendFile(skinini, 'SliderBorder: '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'SliderTrackOverride:  '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'MenuGlow:  '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'StarBreakAdditive:  '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'InputOverlayText:  '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'SongSelectActiveText:  '+RandColor()+'\n')
-	await fs.appendFile(skinini, 'SongSelectInactiveText:  '+RandColor()+'\n')
+	await fs.appendFile(skinini, 'SliderTrackOverride:  0,0,0'+'\n')
+	await fs.appendFile(skinini, 'MenuGlow:  255,90,179'+'\n')
+	await fs.appendFile(skinini, 'StarBreakAdditive: 0,204,255'+'\n')
+	await fs.appendFile(skinini, 'InputOverlayText:  255,255,255'+'\n')
+	await fs.appendFile(skinini, 'SongSelectActiveText:  255,255,255'+'\n')
+	await fs.appendFile(skinini, 'SongSelectInactiveText:  175,175,175'+'\n')
+}
+
+async function SetFolowPoints(){
+	if (config.followpoint == 3 || config.followpoint == 1){
+		var skinfiles = await fs.readdir(skinFolder + "\\" + SkinRandomizerName)
+		for (var skinfile of skinfiles){
+			if (skinfile.toLowerCase().indexOf("followpoint") != -1){
+				await fs.unlink(skinFolder + "\\" + SkinRandomizerName + "\\" + skinfile)
+			}
+		}
+	}
+	if (config.followpoint != 0 && config.followpoint != 3){
+		await RandElement(config.followpoint, "followpoint", "followpoint")
+		if (config.followpoint == 1){
+			for (var i = 0; i<=config.folowpointsLength+config.folowpointsStartFrame; i++){
+				
+				var followpointpath = skinFolder + "\\" + SkinRandomizerName + "\\" + "followpoint-"+i+".png"
+
+				if ( i < config.folowpointsStartFrame ){
+					await fs.copyFile("skins" + "\\" + "empty.png", followpointpath )
+				}
+				if ( i >= config.folowpointsStartFrame && i < config.folowpointsLength+config.folowpointsStartFrame){
+					await fs.copyFile(skinFolder + "\\" + SkinRandomizerName + "\\" + "followpoint.png", followpointpath )
+				}
+				if ( i > config.folowpointsLength+config.folowpointsStartFrame-1 ){
+					await fs.copyFile("skins" + "\\" + "empty.png", followpointpath )
+
+					break
+				}
+			}
+		}
+		await fs.unlink(skinFolder + "\\" + SkinRandomizerName + "\\" + "followpoint.png")
+		if (config.followpoint == 2){
+			await fs.rename(skinFolder + "\\" + SkinRandomizerName + "\\" + "followpoint.png", skinFolder + "\\" + SkinRandomizerName + "\\" + "followpoint-0.png")
+		}
+	}
+	if (config.followpoint == 3){
+		var skinfiles = await fs.readdir(skinFolder + "\\" + SkinRandomizerName)
+		for (var skinfile of skinfiles){
+			if (skinfile.toLowerCase().indexOf("followpoint") != -1){
+				await fs.unlink(skinFolder + "\\" + SkinRandomizerName + "\\" + skinfile)
+			}
+		}
+	}
 }
 
 var SkinRandomizer = {
 
-	run: async function(){	//анимирроованый оверлей
+	run: async function(){	
+
+		//анимирроованый оверлей
 		//колоринг изоражений, комбо колоринг
 		//сеты файлов
 		//сеты юи
@@ -165,22 +293,57 @@ var SkinRandomizer = {
 		//настраиваемая яркость фолоу поинтов, скорость
 		//skin ini
 		//await getAllFolowPoints()
-
+		
 		await RandElement(config.approachcircle, "approachcircle", "approachcircle")
+
 		await RandElement(config.cursor, "cursor", "cursor")
-		await RandElement(config.hit0, "hit0", "hit0")
+		await RandElement(config.cursormiddle, "cursormiddle", "cursormiddle")
+		await RandElement(config.cursortrail, "cursortrail" ,"cursortrail")
+		await RandElement(config.cursorripple,"cursor-ripple", "cursor-ripple")
+		await RandElement(config.cursorsmoke,"cursor-smoke", "cursor-smoke")
+
 		await RandElement(config.hitcircle, "hitcircle", "hitcircle")
 		await RandElement(config.hitcircleoverlay, "hitcircleoverlay", "hitcircleoverlay")
-		await RandElement(config.sliderb, "sliderb", "sliderb")
-		await RandElement(config.sliderfollowcircle, "sliderfollowcircle", "sliderfollowcircle")
-		await RandElement(config.sliderscorepoint, "sliderscorepoint", "sliderscorepoint")
+
 		await RandElement(config.sliderstartcircle, "sliderstartcircle", "hitcircle")
 		await RandElement(config.sliderstartcircleoverlay, "sliderstartcircleoverlay", "hitcircleoverlay")
 		await RandElement(config.sliderendcircle, "sliderendcircle", "hitcircle")
-		await RandElement(config.sliderendcircleoverlay, "sliderendcircleoverlay", "hitcircle")
-		//await RandElement(config.hit50, "hit50", "hit50")
-		//await RandElement(config.hit100, "hit100", "hit100")
-		//await RandElement(config.reversearrow, "reversearrow", "reversearrow")
+		await RandElement(config.sliderendcircleoverlay, "sliderendcircleoverlay", "hitcircleoverlay")
+		await RandElement(config.sliderb, "sliderb", "sliderb")
+		await RandElement(config.sliderfollowcircle, "sliderfollowcircle", "sliderfollowcircle")
+		await RandElement(config.sliderscorepoint, "sliderscorepoint", "sliderscorepoint")
+		await RandElement(config.reversearrow, "reversearrow", "reversearrow")
+
+		await RandElement(config.hit0, "hit0-0", "hit0")
+		await RandElement(config.hit50, "hit50-0", "hit50")
+		await RandElement(config.hit100, "hit100-0", "hit100")
+		//100k 300k 300g
+		await RandElement(config.hit300, "hit300-0", "hit300")
+		await CopyElement(config.hit100, "hit100-0","hit100k-0")
+		await CopyElement(config.hit300, "hit300-0","hit300k-0")
+		await CopyElement(config.hit300, "hit300-0","hit300g-0")
+
+		await RandElement(config.spinnerapproachcircle, "spinner-approachcircle" , "spinner-approachcircle")
+		await RandElement(config.spinnerbottom, "spinner-bottom", "spinner-bottom")
+		await RandElement(config.spinnercircle, "spinner-circle", "spinner-circle")
+		await RandElement(config.spinnerclear, "spinner-clear", "spinner-clear")
+		await RandElement(config.spinnerglow, "spinner-glow", "spinner-glow")
+		await RandElement(config.spinnermiddle, "spinner-middle", "spinner-middle")
+		await RandElement(config.spinnermiddle2, "spinner-middle2", "spinner-middle2")
+		await RandElement(config.spinnerrpm, "spinner-rpm", "spinner-rpm")
+		await RandElement(config.spinnerspin, "spinner-spin", "spinner-spin")
+		await RandElement(config.spinnertop, "spinner-top", "spinner-top")
+		
+		await SetFolowPoints()
+
+		//hitcircleselect
+
+		jimp.read(skinFolder + "\\" + SkinRandomizerName + "\\" +"cursor.png")
+		.then(img=>{
+			img.resize(1024,1024)
+			img.write(skinFolder + "\\" + SkinRandomizerName + "\\" +"cursor.png")
+		})
+
 
 		await MakeSkinIni()
 
