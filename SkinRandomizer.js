@@ -247,6 +247,7 @@ async function SetFolowPoints(){
 	}
 	if (config.followpoint != 0 && config.followpoint != 3){
 		await RandElement(config.followpoint, "followpoint", "followpoint")
+		await RandomHueImage("followpoint")
 		if (config.followpoint == 1){
 			for (var i = 0; i<=config.folowpointsLength+config.folowpointsStartFrame; i++){
 				
@@ -280,6 +281,17 @@ async function SetFolowPoints(){
 	}
 }
 
+async function RandomHueImage(name){
+	var randomhue = Rand(360)-180
+	await jimp.read(skinFolder + "\\" + SkinRandomizerName + "\\" + name+".png")
+	.then(img=>{
+		img.color([
+			{ apply: 'hue', params: [randomhue] }])
+		img.write(skinFolder + "\\" + SkinRandomizerName + "\\" + name+".png")
+	})
+
+}
+
 var SkinRandomizer = {
 
 	run: async function(){	
@@ -295,55 +307,75 @@ var SkinRandomizer = {
 		//await getAllFolowPoints()
 		
 		await RandElement(config.approachcircle, "approachcircle", "approachcircle")
-
+		await RandomHueImage("approachcircle")
 		await RandElement(config.cursor, "cursor", "cursor")
+		await RandomHueImage("cursor")
 		await RandElement(config.cursormiddle, "cursormiddle", "cursormiddle")
+		await RandomHueImage("cursormiddle")
 		await RandElement(config.cursortrail, "cursortrail" ,"cursortrail")
+		await RandomHueImage("cursortrail")
 		await RandElement(config.cursorripple,"cursor-ripple", "cursor-ripple")
+		await RandomHueImage("cursor-ripple")
 		await RandElement(config.cursorsmoke,"cursor-smoke", "cursor-smoke")
+		await RandomHueImage("cursor-smoke")
 
 		await RandElement(config.hitcircle, "hitcircle", "hitcircle")
+		await RandomHueImage("hitcircle")
 		await RandElement(config.hitcircleoverlay, "hitcircleoverlay", "hitcircleoverlay")
+		await RandomHueImage("hitcircleoverlay")
 
 		await RandElement(config.sliderstartcircle, "sliderstartcircle", "hitcircle")
+		await RandomHueImage("sliderstartcircle")
+
 		await RandElement(config.sliderstartcircleoverlay, "sliderstartcircleoverlay", "hitcircleoverlay")
+		await RandomHueImage("sliderstartcircleoverlay")
+
 		await RandElement(config.sliderendcircle, "sliderendcircle", "hitcircle")
+		await RandomHueImage("sliderendcircle")
+
 		await RandElement(config.sliderendcircleoverlay, "sliderendcircleoverlay", "hitcircleoverlay")
+		await RandomHueImage("sliderendcircleoverlay")
+		
 		await RandElement(config.sliderb, "sliderb", "sliderb")
+		await RandomHueImage("sliderb")
 		await RandElement(config.sliderfollowcircle, "sliderfollowcircle", "sliderfollowcircle")
+		await RandomHueImage("sliderfollowcircle")
 		await RandElement(config.sliderscorepoint, "sliderscorepoint", "sliderscorepoint")
+		await RandomHueImage("sliderscorepoint")
 		await RandElement(config.reversearrow, "reversearrow", "reversearrow")
+		await RandomHueImage("reversearrow")
 
 		await RandElement(config.hit0, "hit0-0", "hit0")
 		await RandElement(config.hit50, "hit50-0", "hit50")
 		await RandElement(config.hit100, "hit100-0", "hit100")
-		//100k 300k 300g
 		await RandElement(config.hit300, "hit300-0", "hit300")
+
 		await CopyElement(config.hit100, "hit100-0","hit100k-0")
 		await CopyElement(config.hit300, "hit300-0","hit300k-0")
 		await CopyElement(config.hit300, "hit300-0","hit300g-0")
 
 		await RandElement(config.spinnerapproachcircle, "spinner-approachcircle" , "spinner-approachcircle")
+		await RandomHueImage("spinner-approachcircle")
 		await RandElement(config.spinnerbottom, "spinner-bottom", "spinner-bottom")
+		await RandomHueImage("spinner-bottom")
 		await RandElement(config.spinnercircle, "spinner-circle", "spinner-circle")
+		await RandomHueImage("spinner-circle")
 		await RandElement(config.spinnerclear, "spinner-clear", "spinner-clear")
 		await RandElement(config.spinnerglow, "spinner-glow", "spinner-glow")
 		await RandElement(config.spinnermiddle, "spinner-middle", "spinner-middle")
+		await RandomHueImage("spinner-middle")
 		await RandElement(config.spinnermiddle2, "spinner-middle2", "spinner-middle2")
+		await RandomHueImage("spinner-middle2")
 		await RandElement(config.spinnerrpm, "spinner-rpm", "spinner-rpm")
+		await RandomHueImage("spinner-rpm")
 		await RandElement(config.spinnerspin, "spinner-spin", "spinner-spin")
+		await RandomHueImage("spinner-spin")
 		await RandElement(config.spinnertop, "spinner-top", "spinner-top")
-		
+		await RandomHueImage("spinner-top")
+
 		await SetFolowPoints()
 
 		//hitcircleselect
-
-		jimp.read(skinFolder + "\\" + SkinRandomizerName + "\\" +"cursor.png")
-		.then(img=>{
-			img.resize(1024,1024)
-			img.write(skinFolder + "\\" + SkinRandomizerName + "\\" +"cursor.png")
-		})
-
 
 		await MakeSkinIni()
 
